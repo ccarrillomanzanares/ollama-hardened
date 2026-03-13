@@ -1,0 +1,16 @@
+# Ignorar variables de entorno (Contiene la API Key y configuración local)
+.env
+
+# Ignorar configuración de hardware dinámica
+docker-compose.override.yml
+
+# Ignorar carpetas de caché de Python
+__pycache__/
+*.pyc
+
+# Ignorar archivos temporales del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Ignorar logs locales si se generan
+*.log

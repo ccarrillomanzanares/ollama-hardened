@@ -1,0 +1,92 @@
+services:
+  # The "Gatekeeper" (Proxy with automatic HTTPS)
+  proxy:
+    image: caddy:alpine
+    container_name: ollama-proxy
+    # --- HARDENING ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE # Required for ports 80 and 443
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/tmp
+    # -----------------
+    networks:
+      - frontend-network
+      - backend-network
+    ports:
+      - "443:443"
+    environment:
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
+      - DOMAIN=${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data # Stores Let's Encrypt certificates
+      - caddy_config:/config
+    restart: always
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "--no-check-certificate", "https://localhost:443/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # The AI Engine (Isolated)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-core
+    # --- HARDENING ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # -----------------
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - backend-network # Ollama has NO access to the frontend network or the internet
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    # We do not define "ports" here. Ollama is invisible to the host and the outside.
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '4.00'
+    #       memory: 16G
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    pids_limit: 500        # Prevents a model from creating too many threads and saturating the kernel
+    restart: always
+
+networks:
+  # Network for communication with the outside
+  frontend-network:
+    driver: bridge
+
+  # Private and isolated network for the backend
+  backend-network:
+    driver: bridge
+
+volumes:
+  # Persistent and controlled volume for AI models
+  ollama_data:
+  # Volumes to store SSL certificates and Caddy configuration
+  caddy_data:
+  caddy_config:
