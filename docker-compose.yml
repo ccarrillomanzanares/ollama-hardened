@@ -83,7 +83,10 @@ services:
     #         - driver: nvidia
     #           count: all
     #           capabilities: [gpu]
-    pids_limit: 500        # Prevents a model from creating too many threads and saturating the kernel
+    deploy:
+      resources:
+        limits:
+          pids: 500
     restart: always
     logging:
       driver: "json-file"
