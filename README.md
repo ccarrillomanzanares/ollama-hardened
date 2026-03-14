@@ -29,7 +29,7 @@ A production-ready, Zero-Trust, and "Air-Gapped" architecture to run [Ollama](ht
 \`\`\`bash
 git clone https://github.com/YourUser/ollama-hardened.git
 cd ollama-hardened
-./install.py
+python3 install.py
 \`\`\`
 
 The script is interactive. It will:
@@ -56,7 +56,7 @@ The project includes a robust `Makefile` (Recommended for SysAdmins):
 The project includes an interactive client to interact with your secure Ollama instance from the terminal:
 
 \`\`\`bash
-./client.py
+python3 client.py
 \`\`\`
 
 From the client menu you can:
@@ -71,7 +71,7 @@ From the client menu you can:
 To uninstall the infrastructure securely without using `make clean` (which drops everything), use the interactive uninstaller:
 
 \`\`\`bash
-./uninstall.py
+python3 uninstall.py
 \`\`\`
 *(The script will ask if you want to keep the data volumes—like your downloaded models—and will ask if you want to delete your `.env` file for security).*
 
