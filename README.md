@@ -26,7 +26,7 @@ A production-ready, Zero-Trust, and "Air-Gapped" architecture to run [Ollama](ht
 
 ### Step 1: Install and configure
 
-\`\`\`bash
+\`\`\`
 git clone https://github.com/YourUser/ollama-hardened.git
 cd ollama-hardened
 python3 install.py
@@ -58,15 +58,15 @@ The project includes a robust `Makefile` (Recommended for SysAdmins):
 
 If you don't have a corporate domain, the project includes an automated script to set up a free subdomain via [DuckDNS](https://www.duckdns.org/) and secure it with Let's Encrypt automatically:
 
-\`\`\`bash
-bash install-duckdns.sh
+\`\`\`
+python3 install-duckdns.sh
 \`\`\`
 
 ### ♻️ Automated Updates
 
 To keep your infrastructure up-to-date with the latest versions of Ollama, Open WebUI, and Caddy, run the update script (or use `make update`):
 
-\`\`\`bash
+\`\`\`
 python3 update.py
 \`\`\`
 
@@ -74,7 +74,7 @@ python3 update.py
 
 The project includes an interactive client to interact with your secure Ollama instance from the terminal:
 
-\`\`\`bash
+\`\`\`
 python3 client.py
 \`\`\`
 
@@ -89,7 +89,7 @@ From the client menu you can:
 
 To uninstall the infrastructure securely without using `make clean` (which drops everything), use the interactive uninstaller:
 
-\`\`\`bash
+\`\`\`
 python3 uninstall.py
 \`\`\`
 *(The script will ask if you want to keep the data volumes—like your downloaded models—and will ask if you want to delete your `.env` file for security).*
@@ -99,7 +99,7 @@ python3 uninstall.py
 To use the API programmatically, you must **always** send the `X-API-Key` header. Traffic goes over HTTPS.
 
 **Example with cURL:**
-\`\`\`bash
+\`\`\`
 # Replace 'localhost' with your domain if configured
 curl -H "X-API-Key: YourSuperSecureGeneratedKey123" https://localhost/api/tags
 \`\`\`
