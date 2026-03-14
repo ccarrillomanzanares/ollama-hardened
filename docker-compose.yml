@@ -28,12 +28,18 @@ services:
       - EMAIL_ADMIN=${EMAIL_ADMIN:-admin@localhost}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./Caddyfile.ext:/etc/caddy/Caddyfile.ext:ro
       - caddy_data:/data # Stores Let's Encrypt certificates
       - caddy_config:/config
     restart: always
     depends_on:
       ollama:
         condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "--no-check-certificate", "https://localhost:443/health"]
       interval: 30s
@@ -79,6 +85,12 @@ services:
     #           capabilities: [gpu]
     pids_limit: 500        # Prevents a model from creating too many threads and saturating the kernel
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 
   # The UI (Chat Interface)
   webui:
@@ -98,6 +110,18 @@ services:
       - OLLAMA_BASE_URL=http://ollama:11434
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
 
 networks:
   # Network for communication with the outside

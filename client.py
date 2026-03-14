@@ -204,28 +204,19 @@ def configure_resources():
     print("")
     print("--- Configure Ollama Resources ---")
     
-    # Try to read current values using regex
+    # Read current values from .env
     cpus = "4.00"
     memory = "16G"
     has_gpu = has_nvidia_gpu()
-    
-    if os.path.exists("docker-compose.override.yml"):
+
+    if os.path.exists(".env"):
         try:
-            with open("docker-compose.override.yml", "r") as f:
-                content = f.read()
-                # Regex to find cpus: 'X.XX' or cpus: X.XX
-                cpu_match = re.search(r"cpus:\s*['\"]?([\d\.]+)['\"]?", content)
-                if cpu_match:
-                    cpus = cpu_match.group(1)
-                
-                # Regex to find memory: XXG
-                mem_match = re.search(r"memory:\s*([\w\d]+)", content)
-                if mem_match:
-                    memory = mem_match.group(1)
-                
-                # Check if it already has GPU reservations
-                if "reservations:" in content and "gpu" in content:
-                    has_gpu = True
+            with open(".env", "r") as f:
+                for line in f:
+                    if line.startswith("CPU_LIMIT="):
+                        cpus = line.split("=", 1)[1].strip()
+                    elif line.startswith("MEMORY_LIMIT="):
+                        memory = line.split("=", 1)[1].strip()
         except Exception:
             pass
 
@@ -234,11 +225,33 @@ def configure_resources():
     new_memory = input(f"Enter new RAM limit (e.g., 4G, 32G) [{memory}]: ").strip() or memory
 
     try:
+        # Update .env
+        if os.path.exists(".env"):
+            with open(".env", "r") as f:
+                env_lines = f.readlines()
+
+            # Check if keys exist
+            has_cpu_key = any(line.startswith("CPU_LIMIT=") for line in env_lines)
+            has_mem_key = any(line.startswith("MEMORY_LIMIT=") for line in env_lines)
+
+            with open(".env", "w") as f:
+                for line in env_lines:
+                    if line.startswith("CPU_LIMIT="):
+                        f.write(f"CPU_LIMIT={new_cpus}\n")
+                    elif line.startswith("MEMORY_LIMIT="):
+                        f.write(f"MEMORY_LIMIT={new_memory}\n")
+                    else:
+                        f.write(line)
+
+                if not has_cpu_key:
+                    f.write(f"CPU_LIMIT={new_cpus}\n")
+                if not has_mem_key:
+                    f.write(f"MEMORY_LIMIT={new_memory}\n")
+
         override_content = generate_override_content(new_cpus, new_memory, has_gpu)
         with open("docker-compose.override.yml", "w") as f:
             f.write(override_content)
-        print("✅ docker-compose.override.yml updated.")
-        
+        print("✅ .env and docker-compose.override.yml updated.")        
         apply = input("Apply changes now? (restarts services) [y/N]: ").strip().lower()
         if apply == 'y':
             print("Restarting services to apply new limits...")

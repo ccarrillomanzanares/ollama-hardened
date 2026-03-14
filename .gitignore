@@ -3,6 +3,10 @@
 
 # Ignorar configuración de hardware dinámica
 docker-compose.override.yml
+Caddyfile.ext
+
+# Backups
+openwebui_backup_*.tar.gz
 
 # Ignorar carpetas de caché de Python
 __pycache__/

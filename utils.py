@@ -20,10 +20,6 @@ def get_docker_compose_cmd():
             pass
 
     if not docker_compose_cmd:
-        if os.path.isfile("/home/ccmai/.docker-compose/docker-compose"):
-            docker_compose_cmd = ["/home/ccmai/.docker-compose/docker-compose"]
-
-    if not docker_compose_cmd:
         print("❌ Error: docker-compose or the docker compose plugin was not found.")
         sys.exit(1)
 

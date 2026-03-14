@@ -43,6 +43,7 @@
 
 	# 3. Everything else goes to the Chat Interface (Open WebUI)
 	handle {
+		import /etc/caddy/Caddyfile.ext
 		reverse_proxy webui:8080
 	}
 }

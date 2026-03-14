@@ -1,9 +1,9 @@
 # Makefile for Ollama Hardened
 
 # Docker Compose binary detection
-DOCKER_COMPOSE := $(shell if docker compose version >/dev/null 2>&1; then echo "docker compose"; elif command -v docker-compose >/dev/null 2>&1; then echo "docker-compose"; else echo "/home/ccmai/.docker-compose/docker-compose"; fi)
+DOCKER_COMPOSE := $(shell if docker compose version >/dev/null 2>&1; then echo "docker compose"; else echo "docker-compose"; fi)
 
-.PHONY: start stop restart logs reload clean status health
+.PHONY: start stop restart logs reload clean status health backup
 
 start:
 	@echo "🚀 Starting Ollama Hardened..."
@@ -31,9 +31,12 @@ health:
 	@echo "🏥 Services health status:"
 	@$(DOCKER_COMPOSE) ps --format "table {{.Name}}\t{{.Status}}"
 
+backup:
+	@./backup.py
+
 clean:
 	@echo "⚠️ WARNING: This will delete the .env, certificates, and dynamic configuration files."
 	@read -p "Are you sure? [y/N] " confirm && [ "$$confirm" = "y" ] || exit 1
 	@$(DOCKER_COMPOSE) down -v
-	@rm -f .env docker-compose.override.yml
+	@rm -f .env docker-compose.override.yml Caddyfile.ext
 	@echo "✅ Cleanup completed."
