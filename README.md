@@ -10,7 +10,7 @@ A production-ready, Zero-Trust, and "Air-Gapped" architecture to run [Ollama](ht
 1. **Gatekeeper (Caddy Proxy)**: An ultra-lightweight reverse proxy acting as the sole entry point.
 2. **Automatic HTTPS (Let's Encrypt)**: If you configure a valid domain, the proxy automatically manages and renews TLS certificates. If you use `localhost`, it generates a self-signed one.
 3. **Strong Authentication (API Key)**: Immediate blocking (401 Unauthorized) at the proxy if the request does not include the valid `X-API-Key` header. Malicious traffic never reaches Ollama.
-4. **Air-Gapped Backend**: The Ollama container resides in an internal Docker network (`internal: true`). It has no outbound internet access or ports exposed to the physical host.
+4. **Isolated Backend Network**: The Ollama container resides in a dedicated Docker network. It has no ports exposed to the physical host and can only be accessed through the Gatekeeper.
 5. **Immutable File System**: Both containers run in `read_only: true` mode to prevent malware injection. Legitimate writes are limited to temporary in-memory volumes (`tmpfs`).
 6. **Least Privilege (Cap Drop)**: All kernel administrator privileges are dropped (`cap_drop: ALL`). Containers cannot escalate privileges (`no-new-privileges`).
 7. **Smart Hardware Detection**: The installer automatically detects if there is an NVIDIA GPU. If it exists, it activates it; if not, it configures CPU and RAM limits to protect the host.
@@ -30,7 +30,7 @@ cd ollama-hardened
 ./install.py
 \`\`\`
 
-The script will automatically generate a `.env` file with a secure, base64-generated `OLLAMA_API_KEY`.
+The script will automatically generate a `.env` file with a secure, randomly generated alphanumeric `OLLAMA_API_KEY`.
 
 ### Step 2: Configure Automatic HTTPS (Optional but recommended)
 
@@ -59,7 +59,7 @@ To uninstall the infrastructure, the project includes an interactive script that
 \`\`\`bash
 ./uninstall.py
 \`\`\`
-*(The script will ask if you want to keep the data volumes and will automatically delete your `.env` file for security to avoid leaving orphaned keys).*
+*(The script will ask if you want to keep the data volumes and will ask if you want to delete your `.env` file for security to avoid leaving orphaned keys).*
 
 ## 📡 How to connect (Client)
 
@@ -84,7 +84,7 @@ print(response.json())
 ## 🛠️ Customization and GPU
 
 By default, the configuration is ready to delegate all available NVIDIA GPUs (`deploy.resources.reservations.devices.driver: nvidia`).
-If you do not have a GPU on your server, the container will use the CPU automatically (limited to 4 cores by `docker-compose.yml` to protect the host). You can adjust these limits according to your hardware.
+If you do not have a GPU on your server, the container will use the CPU automatically (limited to 4 cores by `docker-compose.override.yml` generated during installation to protect the host). You can adjust these limits according to your hardware.
 
 ---
 *If you find this architecture useful for your infrastructure, consider leaving a ⭐ on GitHub and contributing improvements.*
