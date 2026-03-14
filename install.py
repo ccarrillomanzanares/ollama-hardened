@@ -6,6 +6,7 @@ import sys
 import subprocess
 import secrets
 import string
+from utils import get_docker_compose_cmd, has_nvidia_gpu, generate_override_content
 
 # Ensure we are in the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -13,28 +14,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 print("🔒 Starting Ollama Hardened deployment...")
 
 # 1. Smart Docker Compose search
-docker_compose_cmd = None
-
-try:
-    if subprocess.run(["docker", "compose", "version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
-        docker_compose_cmd = ["docker", "compose"]
-except FileNotFoundError:
-    pass
-
-if not docker_compose_cmd:
-    try:
-        if subprocess.run(["docker-compose", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
-            docker_compose_cmd = ["docker-compose"]
-    except FileNotFoundError:
-        pass
-
-if not docker_compose_cmd:
-    if os.path.isfile("/home/ccmai/.docker-compose/docker-compose"):
-        docker_compose_cmd = ["/home/ccmai/.docker-compose/docker-compose"]
-
-if not docker_compose_cmd:
-    print("❌ Error: docker-compose or the docker compose plugin was not found.")
-    sys.exit(1)
+docker_compose_cmd = get_docker_compose_cmd()
 
 print(f"✅ Using: {' '.join(docker_compose_cmd)}")
 
@@ -59,32 +39,16 @@ else:
 # 3. Smart Hardware Detection (GPU vs CPU)
 print("🔍 Analyzing available hardware...")
 
-override_content = """services:
-  ollama:
-    deploy:
-      resources:
-        limits:
-          cpus: '4.00'
-          memory: 16G
-"""
-
-has_nvidia = False
-try:
-    if subprocess.run(["nvidia-smi"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
-        has_nvidia = True
-except FileNotFoundError:
-    pass
+has_nvidia = has_nvidia_gpu()
+cpus = "4.00"
+memory = "16G"
 
 if has_nvidia:
     print("⚡ NVIDIA GPU detected! Activating hardware acceleration.")
-    override_content += """        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-"""
 else:
-    print("🐢 No NVIDIA GPU detected. Using CPU mode (Limits: 4 Cores, 16GB RAM).")
+    print(f"🐢 No NVIDIA GPU detected. Using CPU mode (Limits: {cpus} Cores, {memory} RAM).")
+
+override_content = generate_override_content(cpus, memory, has_nvidia)
 
 with open("docker-compose.override.yml", "w") as f:
     f.write(override_content)

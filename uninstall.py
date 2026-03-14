@@ -4,33 +4,13 @@
 import os
 import sys
 import subprocess
+from utils import get_docker_compose_cmd
 
 # Ensure we are in the script's directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # Smart binary search
-docker_compose_cmd = None
-
-try:
-    if subprocess.run(["docker", "compose", "version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
-        docker_compose_cmd = ["docker", "compose"]
-except FileNotFoundError:
-    pass
-
-if not docker_compose_cmd:
-    try:
-        if subprocess.run(["docker-compose", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
-            docker_compose_cmd = ["docker-compose"]
-    except FileNotFoundError:
-        pass
-
-if not docker_compose_cmd:
-    if os.path.isfile("/home/ccmai/.docker-compose/docker-compose"):
-        docker_compose_cmd = ["/home/ccmai/.docker-compose/docker-compose"]
-
-if not docker_compose_cmd:
-    print("❌ Error: docker-compose or the docker compose plugin was not found.")
-    sys.exit(1)
+docker_compose_cmd = get_docker_compose_cmd()
 
 print("🧹 Starting Ollama Hardened uninstallation process...\n")
 

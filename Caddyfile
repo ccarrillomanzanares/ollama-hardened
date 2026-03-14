@@ -1,6 +1,7 @@
 {
 	# Global block to configure security optimizations
-	email ${EMAIL_ADMIN:-admin@localhost} # Required for Let's Encrypt notifications before expiration
+	email {$EMAIL_ADMIN:admin@localhost} # Required for Let's Encrypt notifications before expiration
+	default_sni {$DOMAIN}
 	servers {
 		metrics
 	}
@@ -9,6 +10,8 @@
 # Dynamic domain variable. If you set a real domain, Caddy manages the certificate automatically.
 # If you leave it as "localhost", Caddy generates a self-signed local TLS certificate.
 {$DOMAIN}:443 {
+	# Force self-signed certificate for IP testing (remove this when you have a real domain)
+
 	# 1. Strict security headers (HSTS, X-Frame-Options)
 	header {
 		Strict-Transport-Security "max-age=31536000;"
@@ -21,12 +24,15 @@
 		respond "OK" 200
 	}
 
-	# 2. Access control for the API: Requires API Key
-	handle /api/* {
-		@noauth {
+	# 2. Direct API access: Intercept any request that provides an X-API-Key
+	@api_key_provided {
+		header X-API-Key *
+	}
+	handle @api_key_provided {
+		@invalid_key {
 			not header X-API-Key "{$OLLAMA_API_KEY}"
 		}
-		respond @noauth `{"error": "Access denied. Invalid or missing API Key."}` 401
+		respond @invalid_key `{"error": "Access denied. Invalid API Key."}` 401
 
 		reverse_proxy ollama:11434 {
 			transport http {

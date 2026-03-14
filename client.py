@@ -7,6 +7,8 @@ import json
 import urllib.request
 import urllib.error
 import ssl
+import re
+from utils import get_docker_compose_cmd, has_nvidia_gpu, generate_override_content
 
 # Ensure we are in the script's directory to read .env
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -202,34 +204,37 @@ def configure_resources():
     print("")
     print("--- Configure Ollama Resources ---")
     
-    # Try to read current values
+    # Try to read current values using regex
     cpus = "4.00"
     memory = "16G"
+    has_gpu = has_nvidia_gpu()
+    
     if os.path.exists("docker-compose.override.yml"):
         try:
             with open("docker-compose.override.yml", "r") as f:
-                lines = f.readlines()
-                for line in lines:
-                    if "cpus:" in line:
-                        cpus = line.split(":", 1)[1].strip().replace("'", "").replace("\"", "")
-                    if "memory:" in line:
-                        memory = line.split(":", 1)[1].strip()
+                content = f.read()
+                # Regex to find cpus: 'X.XX' or cpus: X.XX
+                cpu_match = re.search(r"cpus:\s*['\"]?([\d\.]+)['\"]?", content)
+                if cpu_match:
+                    cpus = cpu_match.group(1)
+                
+                # Regex to find memory: XXG
+                mem_match = re.search(r"memory:\s*([\w\d]+)", content)
+                if mem_match:
+                    memory = mem_match.group(1)
+                
+                # Check if it already has GPU reservations
+                if "reservations:" in content and "gpu" in content:
+                    has_gpu = True
         except Exception:
             pass
 
-    print(f"Current limits -> CPUs: {cpus}, RAM: {memory}")
+    print(f"Current limits -> CPUs: {cpus}, RAM: {memory}, GPU: {'Enabled' if has_gpu else 'Disabled'}")
     new_cpus = input(f"Enter new CPU limit (e.g., 2.0, 8.0) [{cpus}]: ").strip() or cpus
     new_memory = input(f"Enter new RAM limit (e.g., 4G, 32G) [{memory}]: ").strip() or memory
 
-    override_content = f"""services:
-  ollama:
-    deploy:
-      resources:
-        limits:
-          cpus: '{new_cpus}'
-          memory: {new_memory}
-"""
     try:
+        override_content = generate_override_content(new_cpus, new_memory, has_gpu)
         with open("docker-compose.override.yml", "w") as f:
             f.write(override_content)
         print("✅ docker-compose.override.yml updated.")
@@ -237,7 +242,8 @@ def configure_resources():
         apply = input("Apply changes now? (restarts services) [y/N]: ").strip().lower()
         if apply == 'y':
             print("Restarting services to apply new limits...")
-            os.system("docker-compose down && docker-compose up -d")
+            docker_cmd = " ".join(get_docker_compose_cmd())
+            os.system(f"{docker_cmd} down && {docker_cmd} up -d")
             print("✅ Done!")
     except Exception as e:
         print(f"❌ Error updating resources: {e}")

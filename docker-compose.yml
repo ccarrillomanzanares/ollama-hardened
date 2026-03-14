@@ -14,6 +14,8 @@ services:
     tmpfs:
       - /tmp
       - /var/tmp
+      - /etc/ssl/certs
+      - /usr/local/share/ca-certificates
     # -----------------
     networks:
       - frontend-network
@@ -23,6 +25,7 @@ services:
     environment:
       - OLLAMA_API_KEY=${OLLAMA_API_KEY}
       - DOMAIN=${DOMAIN:-localhost}
+      - EMAIL_ADMIN=${EMAIL_ADMIN:-admin@localhost}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data # Stores Let's Encrypt certificates
