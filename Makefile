@@ -3,11 +3,11 @@
 # Docker Compose binary detection
 DOCKER_COMPOSE := $(shell if docker compose version >/dev/null 2>&1; then echo "docker compose"; else echo "docker-compose"; fi)
 
-.PHONY: start stop restart logs reload clean status health backup
+.PHONY: start stop restart logs reload clean status health backup update duckdns
 
 start:
 	@echo "🚀 Starting Ollama Hardened..."
-	@./install.py
+	@python3 install.py
 
 stop:
 	@echo "🛑 Stopping services..."
@@ -22,7 +22,7 @@ logs:
 
 reload:
 	@echo "♻️ Reloading configuration..."
-	@./install.py
+	@python3 install.py
 
 status:
 	@$(DOCKER_COMPOSE) ps
@@ -32,7 +32,13 @@ health:
 	@$(DOCKER_COMPOSE) ps --format "table {{.Name}}\t{{.Status}}"
 
 backup:
-	@./backup.py
+	@python3 backup.py
+
+update:
+	@python3 update.py
+
+duckdns:
+	@bash install-duckdns.sh
 
 clean:
 	@echo "⚠️ WARNING: This will delete the .env, certificates, and dynamic configuration files."

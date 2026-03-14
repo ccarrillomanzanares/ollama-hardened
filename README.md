@@ -45,11 +45,30 @@ The project includes a robust `Makefile` (Recommended for SysAdmins):
 * \`make start\`: Starts the containers in the background.
 * \`make stop\`: Stops the containers.
 * \`make restart\`: Restarts the services.
+* \`make reload\`: Applies changes to the `.env` or configuration.
 * \`make logs\`: Shows logs in real-time.
 * \`make status\`: Shows the status of the containers.
 * \`make health\`: Shows the real-time healthcheck status of the services.
 * \`make backup\`: Securely pauses the WebUI, creates a `.tar.gz` backup of all your chats and users, and unpauses it.
+* \`make update\`: Safely pulls new Docker images and recreates containers without losing data.
+* \`make duckdns\`: Configures a free subdomain and HTTPS via DuckDNS.
 * \`make clean\`: **DANGER** Stops everything, deletes data volumes, and removes your configuration files.
+
+### 🦆 Free Domain & HTTPS (DuckDNS)
+
+If you don't have a corporate domain, the project includes an automated script to set up a free subdomain via [DuckDNS](https://www.duckdns.org/) and secure it with Let's Encrypt automatically:
+
+\`\`\`bash
+bash install-duckdns.sh
+\`\`\`
+
+### ♻️ Automated Updates
+
+To keep your infrastructure up-to-date with the latest versions of Ollama, Open WebUI, and Caddy, run the update script (or use `make update`):
+
+\`\`\`bash
+python3 update.py
+\`\`\`
 
 ### 🐍 Interactive Python Client
 
