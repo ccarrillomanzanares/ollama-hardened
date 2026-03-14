@@ -84,22 +84,34 @@ def download_model():
     print("")
     print("--- Download Model ---")
     print("Select a popular model to download:")
-    print("1) llama3       (Meta - 8B)")
-    print("2) mistral      (Mistral AI - 7B)")
-    print("3) qwen2:0.5b   (Alibaba - Fast/Light)")
-    print("4) phi3         (Microsoft - 3.8B)")
-    print("5) gemma2       (Google - 9B)")
-    print("6) ✍️ Custom    (Enter model name manually)")
-    print("0) ❌ Cancel")
+    print(" 1) llama3.2      (Meta - 3B, Fast)")
+    print(" 2) llama3.1      (Meta - 8B)")
+    print(" 3) mistral       (Mistral AI - 7B)")
+    print(" 4) qwen2.5:0.5b  (Alibaba - Fast/Light)")
+    print(" 5) qwen2.5:7b    (Alibaba - High Performance)")
+    print(" 6) phi3.5        (Microsoft - 3.8B)")
+    print(" 7) gemma2        (Google - 9B)")
+    print(" 8) deepseek-r1   (DeepSeek - Reasoning)")
+    print(" 9) codellama     (Meta - Code generation)")
+    print("10) llava         (Vision - Image to text)")
+    print("11) mixtral       (Mistral AI - 8x7B MoE)")
+    print("12) ✍️ Custom     (Enter model name manually)")
+    print(" 0) ❌ Cancel")
     
-    choice = input("Choose an option [0-6]: ").strip()
+    choice = input("Choose an option [0-12]: ").strip()
     model = ""
-    if choice == '1': model = "llama3"
-    elif choice == '2': model = "mistral"
-    elif choice == '3': model = "qwen2:0.5b"
-    elif choice == '4': model = "phi3"
-    elif choice == '5': model = "gemma2"
-    elif choice == '6': model = input("Enter custom model name (e.g., deepseek-coder): ").strip()
+    if choice == '1': model = "llama3.2"
+    elif choice == '2': model = "llama3.1"
+    elif choice == '3': model = "mistral"
+    elif choice == '4': model = "qwen2.5:0.5b"
+    elif choice == '5': model = "qwen2.5:7b"
+    elif choice == '6': model = "phi3.5"
+    elif choice == '7': model = "gemma2"
+    elif choice == '8': model = "deepseek-r1"
+    elif choice == '9': model = "codellama"
+    elif choice == '10': model = "llava"
+    elif choice == '11': model = "mixtral"
+    elif choice == '12': model = input("Enter custom model name (e.g., deepseek-coder): ").strip()
     elif choice == '0': return
     else:
         print("Invalid option.")
@@ -186,6 +198,50 @@ def health_check():
     except Exception as e:
         print(f"Error checking health: {e}")
 
+def configure_resources():
+    print("")
+    print("--- Configure Ollama Resources ---")
+    
+    # Try to read current values
+    cpus = "4.00"
+    memory = "16G"
+    if os.path.exists("docker-compose.override.yml"):
+        try:
+            with open("docker-compose.override.yml", "r") as f:
+                lines = f.readlines()
+                for line in lines:
+                    if "cpus:" in line:
+                        cpus = line.split(":", 1)[1].strip().replace("'", "").replace("\"", "")
+                    if "memory:" in line:
+                        memory = line.split(":", 1)[1].strip()
+        except Exception:
+            pass
+
+    print(f"Current limits -> CPUs: {cpus}, RAM: {memory}")
+    new_cpus = input(f"Enter new CPU limit (e.g., 2.0, 8.0) [{cpus}]: ").strip() or cpus
+    new_memory = input(f"Enter new RAM limit (e.g., 4G, 32G) [{memory}]: ").strip() or memory
+
+    override_content = f"""services:
+  ollama:
+    deploy:
+      resources:
+        limits:
+          cpus: '{new_cpus}'
+          memory: {new_memory}
+"""
+    try:
+        with open("docker-compose.override.yml", "w") as f:
+            f.write(override_content)
+        print("✅ docker-compose.override.yml updated.")
+        
+        apply = input("Apply changes now? (restarts services) [y/N]: ").strip().lower()
+        if apply == 'y':
+            print("Restarting services to apply new limits...")
+            os.system("docker-compose down && docker-compose up -d")
+            print("✅ Done!")
+    except Exception as e:
+        print(f"❌ Error updating resources: {e}")
+
 def main():
     while True:
         # Clear screen for Windows/Linux
@@ -197,11 +253,12 @@ def main():
         print("1. 📋 List installed models")
         print("2. ⬇️  Download a new model (Pull)")
         print("3. 💬 Chat with a model")
-        print("4. 🏥 Check server health status")
-        print("5. ❌ Exit")
+        print("4. ⚙️  Configure CPU/RAM resources")
+        print("5. 🏥 Check server health status")
+        print("6. ❌ Exit")
         print("=================================================")
         
-        option = input("Select an option [1-5]: ").strip()
+        option = input("Select an option [1-6]: ").strip()
         
         if option == '1':
             list_models()
@@ -213,9 +270,12 @@ def main():
             chat()
             pause()
         elif option == '4':
-            health_check()
+            configure_resources()
             pause()
         elif option == '5':
+            health_check()
+            pause()
+        elif option == '6':
             print("Goodbye!")
             break
         else:
