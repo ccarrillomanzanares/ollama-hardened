@@ -16,22 +16,27 @@
 		X-Content-Type-Options "nosniff"
 	}
 
-	# Health endpoint for Docker (before authentication)
+	# 1. Health endpoint for Docker
 	handle /health {
 		respond "OK" 200
 	}
 
-	# 2. Access control: If the API Key is incorrect, returns a JSON error and a 401 code.
-	@noauth {
-		not header X-API-Key "{$OLLAMA_API_KEY}"
-	}
-	respond @noauth `{"error": "Access denied. Invalid or missing API Key."}` 401
-
-	# 3. Proxy to Ollama, but only if the API Key was correct
-	reverse_proxy ollama:11434 {
-		# Specific configurations to avoid timeouts on long responses (AI)
-		transport http {
-			response_header_timeout 5m # Large models may take time to load or generate responses
+	# 2. Access control for the API: Requires API Key
+	handle /api/* {
+		@noauth {
+			not header X-API-Key "{$OLLAMA_API_KEY}"
 		}
+		respond @noauth `{"error": "Access denied. Invalid or missing API Key."}` 401
+
+		reverse_proxy ollama:11434 {
+			transport http {
+				response_header_timeout 5m
+			}
+		}
+	}
+
+	# 3. Everything else goes to the Chat Interface (Open WebUI)
+	handle {
+		reverse_proxy webui:8080
 	}
 }

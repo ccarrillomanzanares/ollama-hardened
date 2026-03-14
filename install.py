@@ -41,12 +41,14 @@ print(f"✅ Using: {' '.join(docker_compose_cmd)}")
 # 2. Secure API Key generation if it does not exist
 if not os.path.exists(".env"):
     print("🔑 Generating a new secure API Key and .env configuration...")
-    # Generate 32 alphanumeric characters
+    # Generate keys
     alphabet = string.ascii_letters + string.digits
     api_key = ''.join(secrets.choice(alphabet) for _ in range(32))
+    webui_secret = ''.join(secrets.choice(alphabet) for _ in range(64))
     
     with open(".env", "w") as f:
         f.write(f"OLLAMA_API_KEY={api_key}\n")
+        f.write(f"WEBUI_SECRET_KEY={webui_secret}\n")
         f.write("DOMAIN=localhost\n")
         f.write("OLLAMA_ORIGINS=https://localhost\n")
         f.write("EMAIL_ADMIN=admin@your-domain.com\n")

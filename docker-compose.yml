@@ -77,6 +77,25 @@ services:
     pids_limit: 500        # Prevents a model from creating too many threads and saturating the kernel
     restart: always
 
+  # The UI (Chat Interface)
+  webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: ollama-webui
+    security_opt:
+      - no-new-privileges:true
+    # Open WebUI needs some specific write permissions for its DB, so we don't use read_only here
+    # but we still drop capabilities for safety.
+    cap_drop:
+      - ALL
+    volumes:
+      - open-webui_data:/app/backend/data
+    networks:
+      - backend-network
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
+    restart: always
+
 networks:
   # Network for communication with the outside
   frontend-network:
@@ -89,6 +108,8 @@ networks:
 volumes:
   # Persistent and controlled volume for AI models
   ollama_data:
+  # Persistent volume for the Chat UI
+  open-webui_data:
   # Volumes to store SSL certificates and Caddy configuration
   caddy_data:
   caddy_config:
