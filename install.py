@@ -48,8 +48,9 @@ if not os.path.exists(".env"):
     with open(".env", "w") as f:
         f.write(f"OLLAMA_API_KEY={api_key}\n")
         f.write("DOMAIN=localhost\n")
+        f.write("OLLAMA_ORIGINS=https://localhost\n")
         f.write("EMAIL_ADMIN=admin@your-domain.com\n")
-    print("✅ .env file generated. You can change DOMAIN and EMAIL to activate automatic HTTPS.")
+    print("✅ .env file generated. You can change DOMAIN, OLLAMA_ORIGINS and EMAIL to activate automatic HTTPS.")
 else:
     print("✅ Existing .env file detected.")
 

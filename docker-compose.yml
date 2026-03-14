@@ -51,6 +51,8 @@ services:
     tmpfs:
       - /tmp
     # -----------------
+    environment:
+      - OLLAMA_ORIGINS=${OLLAMA_ORIGINS:-https://localhost}
     volumes:
       - ollama_data:/root/.ollama
     networks:
